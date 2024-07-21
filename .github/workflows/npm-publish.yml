@@ -45,5 +45,4 @@ jobs:
     - name: Deploy frontend
       working-directory: ./client
       run: |
-        echo "Starting frontend..."
-        nohup npm run dev > frontend.log 2>&1 && echo "Running"
+        nohup npm run dev > frontend.log 2>&1 &
