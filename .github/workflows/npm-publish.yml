@@ -40,8 +40,7 @@ jobs:
         MYSQL_USER: justme
         MYSQL_PASSWORD: justme@123
         NODE_ENV: production
-      run: |
-        npx nodemon index.js
+      run: npm run start:ci
 
     - name: Deploy frontend
       working-directory: ./client
