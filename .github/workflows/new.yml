@@ -1,0 +1,63 @@
+name: Deploy Node.js App
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v3
+
+    - name: Set up Node.js
+      uses: actions/setup-node@v3
+      with:
+        node-version: '16'
+
+    - name: Install dependencies for backend
+      run: npm install --prefix ./server
+
+    - name: Install dependencies for frontend
+      run: npm install --prefix ./client
+
+    - name: Build frontend
+      run: npm run build --prefix ./client
+
+    - name: Deploy to remote server
+      env:
+        SSH_PRIVATE_KEY: ${{ secrets.SERVER_SSH_KEY }}
+        REMOTE_HOST: ${{ secrets.SERVER_HOST }}
+        REMOTE_USER: ${{ secrets.SERVER_USER }}
+        REMOTE_PATH: ${{ secrets.SERVER_PATH }}
+      run: |
+        # Install rsync if not available
+        sudo apt-get install -y rsync
+
+        # Add SSH key to the agent
+        mkdir -p ~/.ssh
+        echo "$SSH_PRIVATE_KEY" > ~/.ssh/id_rsa
+        chmod 600 ~/.ssh/id_rsa
+        ssh-keyscan -H $REMOTE_HOST >> ~/.ssh/known_hosts
+
+        # Sync files to the remote server
+        rsync -avz --delete ./server/ $REMOTE_USER@$REMOTE_HOST:$REMOTE_PATH/server/
+        rsync -avz --delete ./client/ $REMOTE_USER@$REMOTE_HOST:$REMOTE_PATH/client/
+
+        # Execute commands on the remote server
+        ssh -i ~/.ssh/id_rsa $REMOTE_USER@$REMOTE_HOST << 'EOF'
+          cd $REMOTE_PATH/server
+          npm install
+          pm2 delete all || true
+          pm2 start index.js --name backend
+          pm2 save
+
+          cd $REMOTE_PATH/client
+          npm install
+          npm run build
+          pm2 delete frontend || true
+          pm2 start "npm run dev" --name frontend
+          pm2 save
+        EOF
