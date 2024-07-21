@@ -29,6 +29,10 @@ jobs:
     - name: Build frontend
       working-directory: ./client
       run: npm run build
+    - name: Add SSH known hosts
+      run: |
+        mkdir -p ~/.ssh
+        echo "${{ secrets.SSH_KNOWN_HOSTS }}" > ~/.ssh/known_hosts
 
     - name: Deploy to server
       uses: appleboy/ssh-action@v0.1.4
