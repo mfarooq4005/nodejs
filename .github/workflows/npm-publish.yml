@@ -1,0 +1,63 @@
+name: Deploy Node.js App
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy:
+    runs-on: self-hosted
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v3
+
+    - name: Set up Node.js
+      uses: actions/setup-node@v3
+      with:
+        node-version: '16'
+
+    - name: Install dependencies for backend
+      working-directory: ./server
+      run: npm install
+
+    - name: Wait for MySQL to be ready
+      run: |
+        for i in `seq 1 30`; do
+          nc -z localhost 3306 && echo Success && exit 0
+          echo "Waiting for MySQL..."
+          sleep 1
+        done
+        echo "MySQL did not start in time" && exit 1
+
+    - name: Build and test backend
+      working-directory: ./server
+      run: |
+        npm run build
+
+    - name: Install dependencies for frontend
+      working-directory: ./client
+      run: npm install
+
+    - name: Build and test frontend
+      working-directory: ./client
+      run: |
+        npm run build
+        npm test
+
+    - name: Deploy backend
+      working-directory: ./server
+      env:
+        MYSQL_HOST: localhost
+        MYSQL_PORT: 3306
+        MYSQL_DATABASE: node_app
+        MYSQL_USER: justme
+        MYSQL_PASSWORD: justme@123
+        NODE_ENV: production
+      run: |
+        npx nodemon index.js
+
+    - name: Deploy frontend
+      working-directory: ./client
+      run: |
+        npm run dev
