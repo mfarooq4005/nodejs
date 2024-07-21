@@ -41,11 +41,11 @@ jobs:
         MYSQL_PASSWORD: justme@123
         NODE_ENV: production
       run: |
-        npm install pm2
+        sudo npm install -g pm2
         pm2 start index.js --name backend
 
     - name: Deploy frontend
       working-directory: ./client
       run: |
-        npm install pm2
+        sudo npm install -g pm2
         pm2 start npm --name frontend -- run dev
