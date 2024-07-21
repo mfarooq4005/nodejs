@@ -51,7 +51,7 @@ jobs:
     - name: Deploy to server
 #      working-directory: ./server
       run: |
-          ssh -i ${{ secrets.SSH_PRIVATE_KEY }} ${{ secrets.SSH_USERNAME }}@${{ secrets.SSH_HOST }}
+          ssh -i ${{ secrets.SERVER_SSH_KEY }} ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}
           git pull origin main
           npm install --prefix ./server
           npm install --prefix ./client
