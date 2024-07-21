@@ -7,7 +7,8 @@ on:
 
 jobs:
   deploy:
-    runs-on: self-hosted
+    runs-on: ubuntu-latest
+
     steps:
     - name: Checkout code
       uses: actions/checkout@v3
@@ -17,35 +18,31 @@ jobs:
       with:
         node-version: '16'
 
-    - name: Install dependencies for backend
+    - name: Install dependencies for the backend
       working-directory: ./server
       run: npm install
-
 
     - name: Install dependencies for frontend
       working-directory: ./client
       run: npm install
 
-    - name: Build and test frontend
+    - name: Build frontend
       working-directory: ./client
-      run: |
-        npm run build
+      run: npm run build
 
-    - name: Deploy backend
-      working-directory: ./server
-      env:
-        MYSQL_HOST: localhost
-        MYSQL_PORT: 3306
-        MYSQL_DATABASE: node_app
-        MYSQL_USER: justme
-        MYSQL_PASSWORD: justme@123
-        NODE_ENV: production
-      run: |
-        sudo npm install -g pm2
-        pm2 start index.js --name backend
-
-    - name: Deploy frontend
-      working-directory: ./client
-      run: |
-        sudo npm install -g pm2
-        pm2 start npm --name frontend -- run dev
+    - name: Deploy to server
+      uses: appleboy/ssh-action@v0.1.4
+      with:
+        host: ${{ secrets.SSH_HOST }}
+        username: ${{ secrets.SSH_USERNAME }}
+        key: ${{ secrets.SSH_PRIVATE_KEY }}
+        script: |
+          cd /home/ubuntu/
+          git pull origin main
+          npm install --prefix ./server
+          npm install --prefix ./client
+          npm run build --prefix ./client
+          pm2 delete all || true
+          pm2 start ./server/index.js --name backend
+          pm2 start "npm run dev --prefix ./client" --name frontend
+          pm2 save
