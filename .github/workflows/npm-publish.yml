@@ -29,17 +29,21 @@ jobs:
     - name: Build frontend
       working-directory: ./client
       run: npm run build
-    - name: Add SSH known hosts
+
+    - name: Configure SSH
       run: |
         mkdir -p ~/.ssh
         echo "${{ secrets.SSH_KNOWN_HOSTS }}" > ~/.ssh/known_hosts
+        echo "${{ secrets.SERVER_SSH_KEY }}" > ~/.ssh/id_rsa
+        chmod 600 ~/.ssh/id_rsa
+
 
     - name: Deploy to server
       uses: appleboy/ssh-action@v0.1.4
       with:
         host: ${{ secrets.SSH_HOST }}
         username: ${{ secrets.SSH_USERNAME }}
-        key: ${{ secrets.SSH_PRIVATE_KEY }}
+        key: ${{ secrets.SERVER_SSH_KEY }}
         script: |
           cd /home/ubuntu/
           git pull origin main
