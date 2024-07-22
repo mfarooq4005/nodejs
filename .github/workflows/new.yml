@@ -38,7 +38,7 @@ jobs:
         echo "$SSH_PRIVATE_KEY" > ~/.ssh/id_rsa
         chmod 600 ~/.ssh/id_rsa
         ssh-keyscan -H $REMOTE_HOST >> ~/.ssh/known_hosts
-         Sync files to the remote server
+        # Sync files to the remote server
         rsync -avz --delete ./server/ $REMOTE_USER@$REMOTE_HOST:$REMOTE_PATH/server/
         rsync -avz --delete ./client/ $REMOTE_USER@$REMOTE_HOST:$REMOTE_PATH/client/
         # Execute commands on the remote server
